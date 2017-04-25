@@ -20,8 +20,8 @@ type Entry struct {
 	length int
 }
 
-func Create(fname string) (*Pohara, error) {
-	f, err := os.Create(fname)
+func Create(filename string) (*Pohara, error) {
+	f, err := os.Create(filename)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +29,7 @@ func Create(fname string) (*Pohara, error) {
 	pohara := new(Pohara)
 	pohara.file = f
 
-	pohara.index, err = bolt.Open(fname+".db", 0600, nil)
+	pohara.index, err = bolt.Open(filename+".db", 0600, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -38,10 +38,17 @@ func Create(fname string) (*Pohara, error) {
 	return pohara, nil
 }
 
+func Open(filename string) (*Pohara, error) {
+	return nil, nil
+}
+
+func (sm *Pohara) Close() error {
+	return nil
+}
+
 func (sm *Pohara) Add(key []byte, value []byte) error {
-	_, err := sm.file.Write(value)
+	_, err := sm.writeBytes(value)
 	if err != nil {
-		log.Println(err)
 		return err
 	}
 
@@ -53,6 +60,15 @@ func (sm *Pohara) Add(key []byte, value []byte) error {
 	}
 	sm.offset += length
 	return nil
+}
+
+func (sm *Pohara) writeBytes(value []byte) (int, error) {
+	n, err := sm.file.Write(value)
+	if err != nil {
+		log.Println(err)
+	}
+	return n, err
+
 }
 
 func (sm *Pohara) WriteIndex(key []byte, length int) error {
